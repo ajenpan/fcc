@@ -3,193 +3,205 @@ package main
 import (
 	"bytes"
 	"fmt"
-
 	"io/ioutil"
+	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
-	"github.com/saintfish/chardet"
-	lg "github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/net/html/charset"
+	"golang.org/x/text/encoding/htmlindex"
+	"golang.org/x/text/transform"
+
+	"fcc/chardet"
 )
 
-var log = lg.New()
+var Input = ""
 
-func todo() {
-	app := &cli.App{
-		Name: "file-charset-convert",
-		//Version: version,
-		Usage: "file-charset-convert is a tool based xorm package",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "include",
-				Usage: "",
-
-				Hidden:      false,
-				Value:       "",
-				Destination: nil,
-			},
-		},
-		//Action: func(ctx *cli.Context) error {
-		//	return cli.ShowAppHelp(ctx)
-		//},
-	}
-	//sort.Sort(cli.FlagsByName(app.Flags))
-	//sort.Sort(cli.CommandsByName(app.Commands))
-
-	if err := app.Run(os.Args); err != nil {
-		//log.Fatal(err)
-	}
-}
+//var Output = ""
+var Backup = true
+var Recurse = false
+var ForceConvert = false
+var SourceCharset = "gb18030"
+var TargetCharset = "utf-8"
+var Pattern = "*"
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %s + [filename]\n", os.Args[0])
-		return
+	app := &cli.App{
+		Name:    "fcc (file-charset-convert)",
+		Version: "0.0.1",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "input-dir",
+				Aliases:     []string{"i"},
+				Usage:       "",
+				Value:       "./",
+				Destination: &Input,
+			},
+			//&cli.StringFlag{
+			//	Name:        "output-dir",
+			//	Aliases:     []string{"o"},
+			//	Usage:       "",
+			//	Destination: &Output,
+			//},
+			&cli.StringFlag{
+				Name:        "source-charset",
+				Aliases:     []string{"s"},
+				Value:       "auto",
+				Destination: &SourceCharset,
+			},
+			&cli.StringFlag{
+				Name:        "target-charset",
+				Aliases:     []string{"t"},
+				Value:       "utf-8",
+				Destination: &TargetCharset,
+			},
+			&cli.StringFlag{
+				Name:        "pattern",
+				Aliases:     []string{"p"},
+				Value:       "*",
+				Destination: &Pattern,
+				Required:    true,
+			},
+			&cli.BoolFlag{
+				Name:        "force-convert",
+				Aliases:     []string{"f"},
+				Value:       false,
+				Destination: &ForceConvert,
+			},
+			&cli.BoolFlag{
+				Name:        "backup",
+				Value:       true,
+				Destination: &Backup,
+			},
+			&cli.BoolFlag{
+				Name:        "recurse",
+				Aliases:     []string{"r"},
+				Value:       false,
+				Destination: &Recurse,
+			},
+		},
+		Action: func(context *cli.Context) error {
+			return Run()
+		},
 	}
-	allFiles, _ := getAllFiles()
-	files := os.Args[1:]
-	for _, filePattern := range files {
-		fileList, _ := getFileList(filePattern, allFiles)
-		for _, file := range fileList {
-			fText, err := ioutil.ReadFile(file)
-			if err != nil {
-				log.Error("ioutil.ReadFile %s failed: %s", file, err)
-				continue
-			}
-
-			charCode, err := detectCode(fText)
-			if err != nil {
-				log.Error("detectCode failed: %s", err)
-				continue
-			}
-
-			if charCode == "GB-18030" {
-				//oriFile, err := os.OpenFile(file+".ori", os.O_RDWR|os.O_CREATE, 0666)
-				oriFile, err := os.Create(file + ".bak")
-				if err != nil {
-					log.Error("OpenFile %s failed: %s", file+".bak", err)
-					continue
-				}
-
-				//newFile, err := os.OpenFile(file, os.O_RDWR, 0666)
-				newFile, err := os.Create(file)
-				if err != nil {
-					log.Error("OpenFile %s failed: %s", file, err)
-					oriFile.Close()
-					continue
-				}
-
-				_, err = oriFile.Write(fText)
-				if err != nil {
-					log.Error("oriFile.Write failed: %s", err)
-					oriFile.Close()
-					newFile.Close()
-					continue
-				}
-
-				// github.com/saintfish/chardet 只检测 GB-18030
-				// golang.org/x/net/html/charset 只能用gbk
-				newContent, err := convertToUtf8(fText, "gbk")
-				if err != nil {
-					log.Error("convertToUtf8 failed: %s", err)
-					oriFile.Close()
-					newFile.Close()
-					continue
-				}
-
-				_, err = newFile.Write(newContent)
-				if err != nil {
-					log.Error("newFile.Write failed: %s", err)
-					oriFile.Close()
-					newFile.Close()
-					continue
-				}
-
-				oriFile.Close()
-				newFile.Close()
-				fmt.Printf("%s convert from %s to UTF-8 success!\n", file, charCode)
-			}
-		}
+	if err := app.Run(os.Args); err != nil {
+		log.Println(err)
 	}
-
 }
 
-func convertToUtf8(src []byte, encode string) ([]byte, error) {
-	byteReader := bytes.NewReader(src)
-	reader, err := charset.NewReaderLabel(encode, byteReader)
+func Run() error {
+	fileList, err := GetSourceFile(Input, Pattern, Recurse)
 	if err != nil {
-		log.Errorf("charset.NewReaderLabel failed : %s", err)
-		return nil, err
+		log.Println(err)
+		return err
 	}
-
-	dst, err := ioutil.ReadAll(reader)
-	if err != nil {
-		log.Errorf("ioutil.ReadAll failed : %s", err)
-		return nil, err
-	}
-	return dst, nil
-}
-
-func detectCode(src []byte) (string, error) {
-	detector := chardet.NewTextDetector()
-	var result *chardet.Result
-
-	result, err := detector.DetectBest(src)
-	if err != nil {
-		log.Errorf("detector.DetectBest failed: %s", err)
-		return "", err
-	}
-
-	log.Infof("charset: %s, language: %s, confidence: %d",
-		result.Charset, result.Language, result.Confidence)
-
-	return result.Charset, nil
-}
-
-func getFileList(filename string, fileList []string) ([]string, error) {
-	var res = make([]string, 0, 10)
 	for _, file := range fileList {
-		//file = filepath.ToSlash(file)
-		if match, _ := filepath.Match(filename, file); match {
-			res = append(res, file)
+		err := ConvertFile(file)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Printf("convert file success %s\n", file)
 		}
 	}
-	return res, nil
+	return nil
 }
 
-func getAllFiles() ([]string, error) {
-	var allFiles = make([]string, 0)
-	filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			allFiles = append(allFiles, path)
+func GetSourceFile(dir, pattern string, recurse bool) ([]string, error) {
+	if !filepath.IsAbs(dir) {
+		current, err := os.Getwd()
+		if err == nil {
+			dir = path.Join(current, dir)
 		}
-		if err != nil {
-			log.Error("Walk err: %s", err)
-			return err
-		}
-		return nil
-	})
-
-	return allFiles, nil
-}
-
-func getFilesWithPattern(targetPath, pattern string) []string {
-	ret := make([]string, 0)
-	err := filepath.Walk(".", func(file string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-
-			ret = append(ret, file)
-		}
-		if err != nil {
-			log.Error("Walk err: %s", err)
-			return err
-		}
-		return nil
-	})
+	}
+	dir = filepath.ToSlash(dir)
+	rd, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Error(err)
+		return nil, err
 	}
-	return ret
+	ret := make([]string, 0, len(rd))
+	for _, fi := range rd {
+		if fi.IsDir() {
+			if recurse {
+				nextDir := path.Join(dir, fi.Name())
+				files, err := GetSourceFile(nextDir, pattern, recurse)
+				if err != nil {
+					return ret, err
+				}
+				ret = append(ret, files...)
+			}
+		} else {
+			match, err := path.Match(pattern, fi.Name())
+			if err == nil && match {
+				fullName := path.Join(dir, fi.Name())
+				ret = append(ret, fullName)
+			}
+		}
+	}
+	return ret, nil
+}
+
+func ConvertFile(filepath string) error {
+	data, err := ioutil.ReadFile(filepath)
+	if err != nil {
+		return err
+	}
+
+	sCharset := ""
+
+	result, err := chardet.NewTextDetector().DetectBest(data)
+	if err != nil {
+		if SourceCharset == "auto" {
+			return fmt.Errorf("detector file:%s failed: %s", filepath, err)
+		}
+		sCharset = SourceCharset
+	} else {
+		if SourceCharset == "auto" {
+			sCharset = result.Charset
+		} else {
+			if result.Charset != SourceCharset {
+				log.Printf("detect the file:%s charset:%s, but SourceCharset:%s;ForceConvert:%v\n",
+					filepath, result.Charset, SourceCharset, ForceConvert)
+				if !ForceConvert {
+					return nil
+				}
+			}
+			sCharset = SourceCharset
+		}
+	}
+
+	sCharset = strings.ToLower(sCharset)
+	if sCharset == strings.ToLower(TargetCharset) {
+		return nil
+	}
+
+	sourceEncoding, _ := htmlindex.Get(sCharset)
+	if sourceEncoding == nil {
+		return fmt.Errorf("unsupported input charset: %s", sCharset)
+	}
+
+	targetCoding, _ := htmlindex.Get(TargetCharset)
+	if targetCoding == nil {
+		return fmt.Errorf("unsupported output charset: %s", TargetCharset)
+	}
+
+	//backup if need.
+	if Backup {
+		err = ioutil.WriteFile(filepath+".bak", data, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	//begin to convert
+	chain := transform.Chain(sourceEncoding.NewDecoder(), targetCoding.NewEncoder())
+	targetReader := transform.NewReader(bytes.NewReader(data), chain)
+
+	data, err = ioutil.ReadAll(targetReader)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filepath, data, os.ModePerm)
 }
