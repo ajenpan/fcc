@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/encoding/htmlindex"
 	"golang.org/x/text/transform"
 
-	"fcc/chardet"
+	"github.com/AJenpan/fcc/chardet"
 )
 
 var Input = ""
@@ -26,6 +26,7 @@ var ForceConvert = false
 var SourceCharset = "gb18030"
 var TargetCharset = "utf-8"
 var Pattern = "*"
+var DryRun = false
 
 func main() {
 	app := &cli.App{
@@ -58,9 +59,9 @@ func main() {
 				Destination: &TargetCharset,
 			},
 			&cli.StringFlag{
-				Name:        "pattern",
-				Aliases:     []string{"p"},
-				Value:       "*",
+				Name:    "pattern",
+				Aliases: []string{"p"},
+				// Value:       "*",
 				Destination: &Pattern,
 				Required:    true,
 			},
@@ -81,6 +82,12 @@ func main() {
 				Value:       false,
 				Destination: &Recurse,
 			},
+			&cli.BoolFlag{
+				Name:        "dry-run",
+				Aliases:     []string{"d"},
+				Value:       false,
+				Destination: &DryRun,
+			},
 		},
 		Action: func(context *cli.Context) error {
 			return Run()
@@ -98,7 +105,10 @@ func Run() error {
 		return err
 	}
 	for _, file := range fileList {
-		err := ConvertFile(file)
+		var err error
+		if !DryRun {
+			err = ConvertFile(file)
+		}
 		if err != nil {
 			log.Println(err)
 		} else {
