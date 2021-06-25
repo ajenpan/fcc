@@ -24,7 +24,7 @@ func TestDetector(t *testing.T) {
 		{"8859_1_fr.html", true, "ISO-8859-1", "fr"},
 		{"8859_1_pt.html", true, "ISO-8859-1", "pt"},
 		{"shift_jis.html", true, "Shift_JIS", "ja"},
-		{"gb18030.html", true, "GB-18030", "zh"},
+		{"gb18030.html", true, "GB18030", "zh"},
 		{"euc_jp.html", true, "EUC-JP", "ja"},
 		{"euc_kr.html", true, "EUC-KR", "ko"},
 		{"big5.html", true, "Big5", "zh"},
@@ -41,10 +41,14 @@ func TestDetector(t *testing.T) {
 		defer f.Close()
 		size, _ := io.ReadFull(f, buffer)
 		input := buffer[:size]
-		var detector = textDetector
+		var detector *Detector
+
 		if d.IsHtml {
 			detector = htmlDetector
+		} else {
+			detector = textDetector
 		}
+
 		result, err := detector.DetectBest(input)
 		if err != nil {
 			t.Fatal(err)
@@ -52,7 +56,8 @@ func TestDetector(t *testing.T) {
 		if result.Charset != d.Charset {
 			t.Errorf("Expected charset %s, actual %s", d.Charset, result.Charset)
 		}
-		if result.Language != d.Language {
+
+		if d.IsHtml && result.Language != d.Language {
 			t.Errorf("Expected language %s, actual %s", d.Language, result.Language)
 		}
 	}

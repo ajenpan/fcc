@@ -29,7 +29,6 @@
 - --source-charset value, -s value (default: "auto")
 - --target-charset value, -t value (default: "utf-8")
 - --pattern value, -p value
-- --force-convert, -f (default: false)
 - --backup (default: true)
 - --recurse, -r (default: false)
 - --dry-run, -d (default: false)
@@ -38,6 +37,6 @@
 
 ## 使用例子
 
-### 将当前目录下的 gbk \*.h 文件转 utf-8
+### 将当前目录下的 `*.h` 文件转 `utf-8` 编码
 
-`fcc -p *.h -i ./ -t utf-8 -b -r `
+`fcc -p *.h`
