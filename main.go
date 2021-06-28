@@ -111,7 +111,7 @@ func main() {
 							fmt.Println(err)
 							continue
 						}
-						fmt.Printf("%s:%s", filePath, detectCharset)
+						fmt.Printf("detect file %s chatset is %s\n", filePath, detectCharset)
 					}
 					return nil
 				},
@@ -167,7 +167,7 @@ func Run() error {
 				continue
 			}
 		}
-		fmt.Printf("%s convert %s to %s success\n", filePath, detectCharset, TargetCharset)
+		fmt.Printf("convert %s from %s to %s successful\n", filePath, detectCharset, TargetCharset)
 	}
 	return nil
 }
