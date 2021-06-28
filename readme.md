@@ -15,6 +15,10 @@
 - 文件名匹配
 - 自动探测原文件格式
 
+## 补充
+
+detect 已经存在乱码的文件, 将匹配情况可能性大的编码格式.
+
 ## install
 
 `go get github.com/AJenpan/fcc`
@@ -25,18 +29,18 @@
 
 ## usage
 
-- --input-dir value, -i value (default: "./")
-- --source-charset value, -s value (default: "auto")
-- --target-charset value, -t value (default: "utf-8")
-- --pattern value, -p value
-- --backup (default: true)
-- --recurse, -r (default: false)
-- --dry-run, -d (default: false)
-- --help, -h show help (default: false)
-- --version, -v print the version (default: false)
+`fcc --help`
 
 ## 使用例子
 
 ### 将当前目录下的 `*.h` 文件转 `utf-8` 编码
 
 `fcc -p *.h`
+
+### 将当前目录下,并且包括全部子文件夹的 `*.md` 文件由`utf-8`转`gbk`编码, 并且备份
+
+`fcc -i ./ -r -p *.md -s utf-8 -t gbk --backup`
+
+### 只探测(不转换)
+
+`fcc -p *.h detect`

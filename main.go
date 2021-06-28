@@ -29,7 +29,7 @@ var DryRun = false
 func main() {
 	app := &cli.App{
 		Name:    "fcc (file-charset-convert)",
-		Version: "0.1.0",
+		Version: "0.1.1",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "input-dir",
@@ -85,6 +85,36 @@ func main() {
 				Aliases:     []string{"d"},
 				Value:       false,
 				Destination: &DryRun,
+			},
+		},
+		Commands: []*cli.Command{
+			{
+				Name: "detect",
+				Action: func(c *cli.Context) error {
+					SourceCharset = CharsetNameClean(SourceCharset)
+					input := filepath.Clean(Input)
+
+					fileList, err := GetSourceFile(input, Pattern, Recurse)
+					if err != nil {
+						fmt.Println(err)
+						return err
+					}
+					if len(fileList) == 0 {
+						fmt.Println("no file match:", filepath.Join(input, Pattern))
+						return nil
+					}
+
+					var detectCharset string
+
+					for _, filePath := range fileList {
+						if detectCharset, err = DetectCharset(filePath); err != nil {
+							fmt.Println(err)
+							continue
+						}
+						fmt.Printf("%s:%s", filePath, detectCharset)
+					}
+					return nil
+				},
 			},
 		},
 		Action: func(context *cli.Context) error {
