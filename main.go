@@ -17,7 +17,6 @@ import (
 )
 
 //var Output = ""
-//var ForceConvert = false
 var Input = ""
 var Backup = false
 var Recurse = false
@@ -29,7 +28,7 @@ var DryRun = false
 func main() {
 	app := &cli.App{
 		Name:    "fcc (file-charset-convert)",
-		Version: "0.1.1",
+		Version: "0.1.2",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "input-dir",
@@ -38,18 +37,6 @@ func main() {
 				Value:       ".",
 				Destination: &Input,
 			},
-			//&cli.StringFlag{
-			//	Name:        "output-dir",
-			//	Aliases:     []string{"o"},
-			//	Usage:       "",
-			//	Destination: &Output,
-			//},
-			// &cli.BoolFlag{
-			// 	Name:        "force-convert",
-			// 	Aliases:     []string{"f"},
-			// 	Value:       false,
-			// 	Destination: &ForceConvert,
-			// },
 			&cli.StringFlag{
 				Name:        "source-charset",
 				Aliases:     []string{"s"},
@@ -65,60 +52,42 @@ func main() {
 			&cli.StringFlag{
 				Name:        "pattern",
 				Aliases:     []string{"p"},
-				Usage:       "glob patterns, like: *.txt, filename.*, ???.txt",
+				Usage:       "glob patterns, like: *.txt, filename.???",
 				Destination: &Pattern,
 				Required:    true,
 			},
 			&cli.BoolFlag{
 				Name:        "backup",
+				Usage:       "wiil backup with `bak` subfix, filename.ext.bak",
 				Value:       false,
 				Destination: &Backup,
 			},
 			&cli.BoolFlag{
 				Name:        "recurse",
 				Aliases:     []string{"r"},
+				Usage:       "recurse the subdirectories",
 				Value:       false,
 				Destination: &Recurse,
 			},
 			&cli.BoolFlag{
 				Name:        "dry-run",
 				Aliases:     []string{"d"},
+				Usage:       "just list the jobs. do no thing actually",
 				Value:       false,
 				Destination: &DryRun,
 			},
 		},
 		Commands: []*cli.Command{
 			{
-				Name: "detect",
+				Name:  "detect",
+				Usage: "detect the file charset",
 				Action: func(c *cli.Context) error {
-					SourceCharset = CharsetNameClean(SourceCharset)
-					input := filepath.Clean(Input)
-
-					fileList, err := GetSourceFile(input, Pattern, Recurse)
-					if err != nil {
-						fmt.Println(err)
-						return err
-					}
-					if len(fileList) == 0 {
-						fmt.Println("no file match:", filepath.Join(input, Pattern))
-						return nil
-					}
-
-					var detectCharset string
-
-					for _, filePath := range fileList {
-						if detectCharset, err = DetectCharset(filePath); err != nil {
-							fmt.Println(err)
-							continue
-						}
-						fmt.Printf("detect file %s chatset is %s\n", filePath, detectCharset)
-					}
-					return nil
+					return Detect()
 				},
 			},
 		},
 		Action: func(context *cli.Context) error {
-			return Run()
+			return Convert()
 		},
 	}
 	if err := app.Run(os.Args); err != nil {
@@ -126,7 +95,7 @@ func main() {
 	}
 }
 
-func Run() error {
+func Convert() error {
 	SourceCharset = CharsetNameClean(SourceCharset)
 	TargetCharset = CharsetNameClean(TargetCharset)
 
@@ -171,7 +140,31 @@ func Run() error {
 	}
 	return nil
 }
+func Detect() error {
+	SourceCharset = CharsetNameClean(SourceCharset)
+	input := filepath.Clean(Input)
 
+	fileList, err := GetSourceFile(input, Pattern, Recurse)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	if len(fileList) == 0 {
+		fmt.Println("no file match:", filepath.Join(input, Pattern))
+		return nil
+	}
+
+	var detectCharset string
+
+	for _, filePath := range fileList {
+		if detectCharset, err = DetectCharset(filePath); err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Printf("detect file %s chatset is %s\n", filePath, detectCharset)
+	}
+	return nil
+}
 func GetSourceFile(targetDir, pattern string, recurse bool) ([]string, error) {
 	var err error
 	if !filepath.IsAbs(targetDir) {
@@ -185,7 +178,10 @@ func GetSourceFile(targetDir, pattern string, recurse bool) ([]string, error) {
 	}
 	ret := make([]string, 0, len(rd))
 	for _, fi := range rd {
-		if fi.IsDir() && recurse {
+		if fi.IsDir() {
+			if !recurse {
+				continue
+			}
 			nextDir := filepath.Join(targetDir, fi.Name())
 			files, err := GetSourceFile(nextDir, pattern, recurse)
 			if err != nil {
