@@ -13,7 +13,7 @@ import (
 	"golang.org/x/text/encoding/htmlindex"
 	"golang.org/x/text/transform"
 
-	"github.com/AJenpan/fcc/chardet"
+	"github.com/ajenpan/fcc/chardet"
 )
 
 //var Output = ""
@@ -27,8 +27,10 @@ var DryRun = false
 
 func main() {
 	app := &cli.App{
-		Name:    "fcc (file-charset-convert)",
-		Version: "0.1.2",
+		Name:        "fcc (file-charset-convert)",
+		Version:     "0.1.3",
+		Description: "convert file charset to you want",
+		Authors:     []*cli.Author{&cli.Author{Name: "ajenpan", Email: "ajenpan@gmail.com"}},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "input-dir",
@@ -36,40 +38,34 @@ func main() {
 				Usage:       "",
 				Value:       ".",
 				Destination: &Input,
-			},
-			&cli.StringFlag{
+			}, &cli.StringFlag{
 				Name:        "source-charset",
 				Aliases:     []string{"s"},
 				Value:       "auto",
 				Destination: &SourceCharset,
-			},
-			&cli.StringFlag{
+			}, &cli.StringFlag{
 				Name:        "target-charset",
 				Aliases:     []string{"t"},
 				Value:       "utf-8",
 				Destination: &TargetCharset,
-			},
-			&cli.StringFlag{
+			}, &cli.StringFlag{
 				Name:        "pattern",
 				Aliases:     []string{"p"},
 				Usage:       "glob patterns, like: *.txt, filename.???",
 				Destination: &Pattern,
 				Required:    true,
-			},
-			&cli.BoolFlag{
+			}, &cli.BoolFlag{
 				Name:        "backup",
 				Usage:       "wiil backup with `bak` subfix, filename.ext.bak",
 				Value:       false,
 				Destination: &Backup,
-			},
-			&cli.BoolFlag{
+			}, &cli.BoolFlag{
 				Name:        "recurse",
 				Aliases:     []string{"r"},
 				Usage:       "recurse the subdirectories",
 				Value:       false,
 				Destination: &Recurse,
-			},
-			&cli.BoolFlag{
+			}, &cli.BoolFlag{
 				Name:        "dry-run",
 				Aliases:     []string{"d"},
 				Usage:       "just list the jobs. do no thing actually",
@@ -140,6 +136,7 @@ func Convert() error {
 	}
 	return nil
 }
+
 func Detect() error {
 	SourceCharset = CharsetNameClean(SourceCharset)
 	input := filepath.Clean(Input)

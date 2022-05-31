@@ -21,7 +21,7 @@ detect 已经存在乱码的文件, 将匹配情况可能性大的编码格式.
 
 ## install
 
-`go get github.com/AJenpan/fcc`
+`go get github.com/ajenpan/fcc`
 
 ## help
 

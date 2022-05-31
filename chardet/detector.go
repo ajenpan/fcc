@@ -25,48 +25,50 @@ type Detector struct {
 // List of charset recognizers
 var recognizers = []recognizer{
 	newRecognizer_utf8(),
-	newRecognizer_utf16be(),
-	newRecognizer_utf16le(),
-	newRecognizer_utf32be(),
-	newRecognizer_utf32le(),
-	newRecognizer_8859_1_en(),
-	newRecognizer_8859_1_da(),
-	newRecognizer_8859_1_de(),
-	newRecognizer_8859_1_es(),
-	newRecognizer_8859_1_fr(),
-	newRecognizer_8859_1_it(),
-	newRecognizer_8859_1_nl(),
-	newRecognizer_8859_1_no(),
-	newRecognizer_8859_1_pt(),
-	newRecognizer_8859_1_sv(),
-	newRecognizer_8859_2_cs(),
-	newRecognizer_8859_2_hu(),
-	newRecognizer_8859_2_pl(),
-	newRecognizer_8859_2_ro(),
-	newRecognizer_8859_5_ru(),
-	newRecognizer_8859_6_ar(),
-	newRecognizer_8859_7_el(),
-	newRecognizer_8859_8_I_he(),
-	newRecognizer_8859_8_he(),
+	// newRecognizer_utf16be(),
+	// newRecognizer_utf16le(),
+	// newRecognizer_utf32be(),
+	// newRecognizer_utf32le(),
+
+	// newRecognizer_8859_1_en(),
+	// newRecognizer_8859_1_da(),
+	// newRecognizer_8859_1_de(),
+	// newRecognizer_8859_1_es(),
+	// newRecognizer_8859_1_fr(),
+	// newRecognizer_8859_1_it(),
+	// newRecognizer_8859_1_nl(),
+	// newRecognizer_8859_1_no(),
+	// newRecognizer_8859_1_pt(),
+	// newRecognizer_8859_1_sv(),
+	// newRecognizer_8859_2_cs(),
+	// newRecognizer_8859_2_hu(),
+	// newRecognizer_8859_2_pl(),
+	// newRecognizer_8859_2_ro(),
+	// newRecognizer_8859_5_ru(),
+	// newRecognizer_8859_6_ar(),
+	// newRecognizer_8859_7_el(),
+	// newRecognizer_8859_8_I_he(),
+	// newRecognizer_8859_8_he(),
+	// newRecognizer_8859_9_tr(),
+
 	newRecognizer_windows_1251(),
 	newRecognizer_windows_1256(),
-	newRecognizer_KOI8_R(),
-	newRecognizer_8859_9_tr(),
+	// newRecognizer_KOI8_R(),
 
-	newRecognizer_sjis(),
+	// newRecognizer_sjis(),
 	newRecognizer_gb18030(),
-	newRecognizer_euc_jp(),
-	newRecognizer_euc_kr(),
+	// newRecognizer_euc_jp(),
+	// newRecognizer_euc_kr(),
 	newRecognizer_big5(),
 
-	newRecognizer_2022JP(),
-	newRecognizer_2022KR(),
+	// newRecognizer_2022JP(),
+	// newRecognizer_2022KR(),
 	newRecognizer_2022CN(),
 
-	newRecognizer_IBM424_he_rtl(),
-	newRecognizer_IBM424_he_ltr(),
-	newRecognizer_IBM420_ar_rtl(),
-	newRecognizer_IBM420_ar_ltr(),
+	// newRecognizer_IBM424_he_rtl(),
+	// newRecognizer_IBM424_he_ltr(),
+	// newRecognizer_IBM420_ar_rtl(),
+	// newRecognizer_IBM420_ar_ltr(),
 }
 
 // NewTextDetector creates a Detector for plain text.
@@ -80,7 +82,7 @@ func NewHtmlDetector() *Detector {
 }
 
 var (
-	NotDetectedError = errors.New("Charset not detected.")
+	ErrNotDetected = errors.New("charset not detected")
 )
 
 // DetectBest returns the Result with highest Confidence.
@@ -107,7 +109,7 @@ func (d *Detector) DetectAll(b []byte) ([]Result, error) {
 		}
 	}
 	if len(outputs) == 0 {
-		return nil, NotDetectedError
+		return nil, ErrNotDetected
 	}
 
 	sort.Sort(recognizerOutputs(outputs))
@@ -120,7 +122,7 @@ func (d *Detector) DetectAll(b []byte) ([]Result, error) {
 		}
 	}
 	if len(dedupOutputs) == 0 {
-		return nil, NotDetectedError
+		return nil, ErrNotDetected
 	}
 	return dedupOutputs, nil
 }
