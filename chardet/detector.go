@@ -51,12 +51,12 @@ var recognizers = []recognizer{
 	// newRecognizer_8859_8_he(),
 	// newRecognizer_8859_9_tr(),
 
-	newRecognizer_windows_1251(),
-	newRecognizer_windows_1256(),
+	// newRecognizer_windows_1251(),
+	// newRecognizer_windows_1256(),
 	// newRecognizer_KOI8_R(),
 
 	// newRecognizer_sjis(),
-	newRecognizer_gb18030(),
+	newRecognizer_gb18030(), // gb18030 is contain GBK, GB2312, big5, jp, and kr.
 	// newRecognizer_euc_jp(),
 	// newRecognizer_euc_kr(),
 	newRecognizer_big5(),

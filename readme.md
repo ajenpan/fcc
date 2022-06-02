@@ -23,10 +23,6 @@ detect 已经存在乱码的文件, 将匹配情况可能性大的编码格式.
 
 `go get github.com/ajenpan/fcc`
 
-## help
-
-`fcc --help`
-
 ## usage
 
 `fcc --help`
@@ -44,3 +40,8 @@ detect 已经存在乱码的文件, 将匹配情况可能性大的编码格式.
 ### 只探测(不转换)
 
 `fcc -p *.h detect`
+
+## ref
+
+ - https://www-archive.mozilla.org/projects/intl/chardet.html
+ - https://www-archive.mozilla.org/projects/intl/universalcharsetdetection

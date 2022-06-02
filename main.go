@@ -25,12 +25,24 @@ var TargetCharset = "utf-8"
 var Pattern = "*"
 var DryRun = false
 
+var Version string = "unknown"
+var GitCommit string = "unknown"
+var BuildAt string = "unknown"
+var BuildBy string = "unknown"
+
 func main() {
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Println("version:", c.App.Version)
+		fmt.Println("git commit:", GitCommit)
+		fmt.Println("build at:", BuildAt)
+		fmt.Println("build by:", BuildBy)
+	}
+
 	app := &cli.App{
 		Name:        "fcc (file-charset-convert)",
-		Version:     "0.1.3",
+		Version:     Version,
 		Description: "convert file charset to you want",
-		Authors:     []*cli.Author{&cli.Author{Name: "ajenpan", Email: "ajenpan@gmail.com"}},
+		Authors:     []*cli.Author{{Name: "ajenpan", Email: "ajenpan@gmail.com"}},
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "input-dir",
