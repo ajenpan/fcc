@@ -59,7 +59,7 @@ var recognizers = []recognizer{
 	newRecognizer_gb18030(), // gb18030 is contain GBK, GB2312, big5, jp, and kr.
 	// newRecognizer_euc_jp(),
 	// newRecognizer_euc_kr(),
-	newRecognizer_big5(),
+	// newRecognizer_big5(),
 
 	// newRecognizer_2022JP(),
 	// newRecognizer_2022KR(),
