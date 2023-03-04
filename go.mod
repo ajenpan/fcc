@@ -3,8 +3,8 @@ module github.com/ajenpan/fcc
 go 1.17
 
 require (
-	github.com/urfave/cli/v2 v2.8.1
-	golang.org/x/text v0.3.7
+	github.com/urfave/cli/v2 v2.24.4
+	golang.org/x/text v0.7.0
 )
 
 require (

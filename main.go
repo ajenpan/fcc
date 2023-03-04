@@ -16,7 +16,6 @@ import (
 	"github.com/ajenpan/fcc/chardet"
 )
 
-//var Output = ""
 var Input = ""
 var Backup = false
 var Recurse = false
@@ -123,7 +122,7 @@ func Convert() error {
 
 	for _, filePath := range fileList {
 		if detectCharset, err = DetectCharset(filePath); err != nil {
-			fmt.Println(err)
+			fmt.Println(err, filePath)
 			continue
 		}
 
